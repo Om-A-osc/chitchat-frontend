@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { signup as apiSignup } from '../services/api';
+import { getOrCreateUserKeyPair } from '../services/e2ee';
 
 export default function SignupPage({ onSwitchToLogin }) {
   const [username, setUsername] = useState('');
@@ -27,11 +28,14 @@ export default function SignupPage({ onSwitchToLogin }) {
 
     setLoading(true);
     try {
+      const trimmedUser = username.trim();
+      const keys = await getOrCreateUserKeyPair(trimmedUser);
       await apiSignup(
-        username.trim(),
+        trimmedUser,
         password,
         tagline.trim() || null,
-        profilePicture.trim() || null
+        profilePicture.trim() || null,
+        keys?.publicKeyBase64 || null
       );
       setSuccess('Account created! Redirecting to login...');
       setTimeout(() => onSwitchToLogin(), 1500);

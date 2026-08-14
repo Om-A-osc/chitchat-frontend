@@ -20,14 +20,12 @@ export default function MessageBubble({ message, isOwn, room }) {
   const receipts = message.receipts || {};
   const hasReceipts = Object.keys(receipts).length > 0;
   
-  // Helper to safely check if a receipt status is truthy (not null, false, or empty)
   const isStatusSet = (val) => {
     if (val === null || val === undefined || val === false || val === 'null' || val === '') return false;
     return true;
   };
 
-  // Calculate overall status
-  let overallStatus = 'sent'; // default
+  let overallStatus = 'sent';
   if (hasReceipts) {
     const allRead = Object.values(receipts).some(r => isStatusSet(r.read));
     const anyDelivered = Object.values(receipts).some(r => isStatusSet(r.delivered) || isStatusSet(r.read));
@@ -38,7 +36,6 @@ export default function MessageBubble({ message, isOwn, room }) {
     }
   }
 
-  // Determine if we should allow clicking for info
   const members = room?.members || [];
   const otherMembers = members.filter(m => m.username !== sender).map(m => m.username);
   const canShowInfo = isOwn && otherMembers.length > 0;

@@ -7,11 +7,11 @@ export default function ChatArea({
   messages, 
   username, 
   onSendMessage, 
-  connectionStatus,
-  historyStatus,
-  onLoadMore,
-  onShowRoomInfo,
-  onToggleSidebar
+  connectionStatus, 
+  historyStatus, 
+  onLoadMore, 
+  onShowRoomInfo, 
+  onToggleSidebar 
 }) {
   const messagesEndRef = useRef(null);
   const chatMessagesRef = useRef(null);
@@ -21,20 +21,16 @@ export default function ChatArea({
   const isScrolledToBottomRef = useRef(true);
   const lastRoomIdRef = useRef(room?.roomId);
 
-  // Handle scroll events
   function handleScroll(e) {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
     
-    // Check if scrolled to top
     if (scrollTop === 0 && historyStatus === 'unfetched') {
       onLoadMore(room?.roomId);
     }
     
-    // Check if scrolled to bottom (allow 50px threshold)
     isScrolledToBottomRef.current = scrollHeight - scrollTop - clientHeight < 50;
   }
 
-  // Preserve scroll position when history is prepended, or auto-scroll to bottom for new messages
   useLayoutEffect(() => {
     const scrollContainer = chatMessagesRef.current;
     if (!scrollContainer) return;
@@ -42,7 +38,6 @@ export default function ChatArea({
     const isNewRoom = room?.roomId !== lastRoomIdRef.current;
     
     if (isNewRoom) {
-      // Switched rooms: reset scroll state to bottom
       lastRoomIdRef.current = room?.roomId;
       isScrolledToBottomRef.current = true;
       messagesEndRef.current?.scrollIntoView();
@@ -55,28 +50,23 @@ export default function ChatArea({
     const isPrepended = messagesAdded && scrollContainer.scrollTop === 0 && historyStatus === 'fetched';
 
     if (isPrepended) {
-      // Messages were prepended (history loaded): adjust scroll to stay at the same message
       const newScrollHeight = scrollContainer.scrollHeight;
       const heightDifference = newScrollHeight - prevScrollHeightRef.current;
       scrollContainer.scrollTop = heightDifference;
     } else if (messagesAdded && isScrolledToBottomRef.current) {
-      // New real-time message added and user was at bottom: scroll down
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Update refs for next render
     prevScrollHeightRef.current = scrollContainer.scrollHeight;
     prevMessagesLengthRef.current = messages.length;
   }, [messages, room?.roomId, historyStatus]);
 
-  // Initial trigger for history fetch when room is opened
   useEffect(() => {
     if (room && historyStatus === 'unfetched') {
       onLoadMore(room.roomId);
     }
   }, [room?.roomId, historyStatus, onLoadMore]);
 
-  // No room selected
   if (!room) {
     return (
       <div className="chat-area" style={{ position: 'relative' }}>
@@ -93,7 +83,6 @@ export default function ChatArea({
           </svg>
         </button>
         <div className="no-room-selected">
-          <div className="no-room-icon">💬</div>
           <h2 className="no-room-title">Welcome to ChitChat</h2>
           <p className="no-room-text">
             Select a room from the sidebar or create a new one to start chatting with your team.
@@ -103,7 +92,6 @@ export default function ChatArea({
     );
   }
 
-  // Group messages by date for dividers
   function getDateLabel(timestamp) {
     if (!timestamp) return null;
     const date = new Date(timestamp);
@@ -124,7 +112,6 @@ export default function ChatArea({
 
   return (
     <div className="chat-area">
-      {/* Header */}
       <div className="chat-header">
         <div className="chat-header-left">
           <button className="hamburger-btn" onClick={onToggleSidebar} title="Open sidebar">
@@ -143,7 +130,6 @@ export default function ChatArea({
           </span>
         </div>
         <div className="chat-header-right">
-
           <button className="chat-header-btn" title="More options" onClick={onShowRoomInfo}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="5" r="2" />
@@ -154,7 +140,6 @@ export default function ChatArea({
         </div>
       </div>
 
-      {/* Connection status */}
       {connectionStatus && connectionStatus !== 'connected' && (
         <div className={`connection-status ${connectionStatus}`}>
           <span className="connection-dot" />
@@ -163,7 +148,6 @@ export default function ChatArea({
         </div>
       )}
 
-      {/* Messages */}
       <div 
         className="chat-messages" 
         ref={chatMessagesRef}
@@ -187,7 +171,6 @@ export default function ChatArea({
         
         {messages.length === 0 && historyStatus === 'fetched' ? (
           <div className="chat-empty">
-            <div className="chat-empty-icon">🚀</div>
             <h3 className="chat-empty-title">Start the conversation</h3>
             <p className="chat-empty-text">
               This is the beginning of <strong>#{room.roomname}</strong>. Send a message to get things going!
@@ -221,7 +204,6 @@ export default function ChatArea({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <MessageInput
         roomName={room.roomname}
         onSend={onSendMessage}

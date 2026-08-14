@@ -9,7 +9,6 @@ export default function IconRail() {
 
   return (
     <div className="icon-rail">
-      {/* App logo */}
       <div className="icon-rail-logo" title="ChitChat">
         CC
       </div>
@@ -18,7 +17,6 @@ export default function IconRail() {
 
       <div className="icon-rail-spacer" />
 
-      {/* Avatar / Logout */}
       <div
         className="icon-rail-avatar"
         title={`Logged in as ${username} - click to logout`}

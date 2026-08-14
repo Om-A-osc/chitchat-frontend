@@ -1,20 +1,15 @@
 export default function Sidebar({ rooms, activeRoomId, onSelectRoom, onCreateRoom, onJoinRoom, isOpen, onClose }) {
   return (
     <div className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
-      {/* Header */}
       <div className="sidebar-header">
         <div className="sidebar-brand">
           <div className="sidebar-brand-name">
             ChitChat
           </div>
         </div>
-
-
       </div>
 
-      {/* Content */}
       <div className="sidebar-content">
-        {/* Rooms section */}
         <div className="sidebar-section">
           <div className="sidebar-section-header">
             <span className="sidebar-section-title">Rooms</span>
@@ -64,8 +59,6 @@ export default function Sidebar({ rooms, activeRoomId, onSelectRoom, onCreateRoo
             </div>
           ))}
         </div>
-
-
       </div>
     </div>
   );
