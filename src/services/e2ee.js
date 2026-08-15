@@ -2,7 +2,7 @@ const roomKeyCache = new Map();
 const roomKeyB64Cache = new Map();
 const userKeyCache = new Map();
 
-function bufferToBase64(buffer) {
+export function bufferToBase64(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
@@ -11,7 +11,7 @@ function bufferToBase64(buffer) {
   return window.btoa(binary);
 }
 
-function base64ToBuffer(base64) {
+export function base64ToBuffer(base64) {
   const binary = window.atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
@@ -122,33 +122,7 @@ export async function createEncryptedRoomKeys(participants, currentUsername, fet
     true,
     ['encrypt', 'decrypt']
   );
-
-  const exportedRawAes = await window.crypto.subtle.exportKey('raw', roomAesKey);
-  const allUsers = Array.from(new Set([...participants, currentUsername]));
-  const userKeys = {};
-
-  for (const user of allUsers) {
-    try {
-      let pubKey = null;
-      if (user === currentUsername) {
-        const myKeys = await getOrCreateUserKeyPair(currentUsername);
-        pubKey = myKeys?.publicKey;
-      } else {
-        pubKey = await fetchUserPublicKey(user, fetchWithAuth, apiBase);
-      }
-
-      if (pubKey) {
-        const encryptedKeyBuffer = await window.crypto.subtle.encrypt(
-          { name: 'RSA-OAEP' },
-          pubKey,
-          exportedRawAes
-        );
-        userKeys[user] = bufferToBase64(encryptedKeyBuffer);
-      }
-    } catch {}
-  }
-
-  return { roomAesKey, userKeys };
+  return { roomAesKey, userKeys: {} };
 }
 
 export async function getOrLoadRoomKey(roomId, currentUsername, participants = [], fetchWithAuth, apiBase, forceRefresh = false) {
@@ -159,65 +133,7 @@ export async function getOrLoadRoomKey(roomId, currentUsername, participants = [
   if (!forceRefresh && keys.length > 0) {
     return keys;
   }
-
-  const myKeys = await getOrCreateUserKeyPair(currentUsername);
-  if (!myKeys) return keys;
-
-  const addKey = async (aesKey) => {
-    const exported = await window.crypto.subtle.exportKey('raw', aesKey);
-    const b64 = bufferToBase64(exported);
-    if (!roomKeyB64Cache.has(roomId)) roomKeyB64Cache.set(roomId, new Set());
-    const b64Set = roomKeyB64Cache.get(roomId);
-    if (!b64Set.has(b64)) {
-      b64Set.add(b64);
-      keys.push(aesKey);
-      roomKeyCache.set(roomId, keys);
-    }
-  };
-
-  try {
-    const res = await fetchWithAuth(`${apiBase}/room/${roomId}/key`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.encryptedKey) {
-        const decryptedRaw = await window.crypto.subtle.decrypt(
-          { name: 'RSA-OAEP' },
-          myKeys.privateKey,
-          base64ToBuffer(data.encryptedKey)
-        );
-
-        const aesKey = await window.crypto.subtle.importKey(
-          'raw',
-          decryptedRaw,
-          { name: 'AES-GCM' },
-          false,
-          ['encrypt', 'decrypt']
-        );
-
-        await addKey(aesKey);
-        return keys;
-      }
-    }
-  } catch {}
-
-  if (keys.length > 0) {
-    return keys;
-  }
-
-  try {
-    const { roomAesKey, userKeys } = await createEncryptedRoomKeys(participants, currentUsername, fetchWithAuth, apiBase);
-    if (Object.keys(userKeys).length > 0) {
-      await fetchWithAuth(`${apiBase}/room/${roomId}/keys`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userKeys),
-      });
-    }
-    await addKey(roomAesKey);
-    return keys;
-  } catch {
-    return keys;
-  }
+  return keys;
 }
 
 export async function cacheRoomKey(roomId, aesKey) {

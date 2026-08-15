@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, fetchRooms, fetchRecentMessages, fetchMessageReceipt, fetchWithAuth, API_BASE } from '../services/api';
 import { connectWebSocket } from '../services/websocket';
-import { initUserE2EE, getOrLoadRoomKey, createEncryptedRoomKeys, encryptMessage, decryptMessage, cacheRoomKey } from '../services/e2ee';
+import { initUserE2EE, getOrLoadRoomKey, createEncryptedRoomKeys, encryptMessage, decryptMessage, cacheRoomKey, fetchUserPublicKey, getOrCreateUserKeyPair, bufferToBase64, base64ToBuffer } from '../services/e2ee';
 import IconRail from '../components/IconRail';
 import Sidebar from '../components/Sidebar';
 import ChatArea from '../components/ChatArea';
@@ -47,18 +47,25 @@ export default function ChatPage() {
   const getRoomAesKey = useCallback(async (roomId, forceRefresh = false) => {
     if (!roomId) return null;
     if (!forceRefresh && roomKeysRef.current.has(roomId)) {
-      return roomKeysRef.current.get(roomId);
+      const keys = roomKeysRef.current.get(roomId);
+      if (keys && keys.length > 0) return keys;
     }
 
     const currentRooms = roomsRef.current;
     const roomObj = currentRooms.find(r => r.roomId === roomId);
     const participants = roomObj?.members ? roomObj.members.map(m => m.username) : [];
 
-    const key = await getOrLoadRoomKey(roomId, username, participants, fetchWithAuth, API_BASE, forceRefresh);
-    if (key) {
-      roomKeysRef.current.set(roomId, key);
+    const keys = await getOrLoadRoomKey(roomId, username, participants, fetchWithAuth, API_BASE, forceRefresh);
+    if (keys && keys.length > 0) {
+      roomKeysRef.current.set(roomId, keys);
+      return keys;
+    } else {
+      // Key not present in cache, request it over WS
+      if (wsRef.current) {
+        wsRef.current.requestRoomKey(roomId);
+      }
+      return [];
     }
-    return key;
   }, [username]);
 
   useEffect(() => {
@@ -162,6 +169,76 @@ export default function ChatPage() {
                 readReceiptsSentRef.current.add(data.messageId);
               }
             }
+            return;
+          }
+
+          if (data.type === 'REQUEST_ROOM_KEY') {
+            const roomId = data.roomId;
+            const requester = data.sender;
+            
+            if (requester !== username && roomKeysRef.current.has(roomId)) {
+              const keys = roomKeysRef.current.get(roomId);
+              if (keys && keys.length > 0) {
+                try {
+                  const activeKey = keys[keys.length - 1];
+                  const pubKey = await fetchUserPublicKey(requester, fetchWithAuth, API_BASE);
+                  if (pubKey) {
+                    const exportedRawAes = await window.crypto.subtle.exportKey('raw', activeKey);
+                    const encryptedKeyBuffer = await window.crypto.subtle.encrypt(
+                      { name: 'RSA-OAEP' },
+                      pubKey,
+                      exportedRawAes
+                    );
+                    const encryptedKeyBase64 = bufferToBase64(encryptedKeyBuffer);
+                    if (wsRef.current) {
+                      wsRef.current.sendKeyExchange(roomId, requester, encryptedKeyBase64);
+                    }
+                  }
+                } catch (e) {
+                  console.error('Failed to send key exchange', e);
+                }
+              }
+            }
+            return;
+          }
+
+          if (data.type === 'KEY_EXCHANGE') {
+            if (data.recipientUsername === username) {
+              const roomId = data.roomId;
+              try {
+                const myKeys = await getOrCreateUserKeyPair(username);
+                if (myKeys) {
+                  const decryptedRaw = await window.crypto.subtle.decrypt(
+                    { name: 'RSA-OAEP' },
+                    myKeys.privateKey,
+                    base64ToBuffer(data.encryptedKey)
+                  );
+                  const aesKey = await window.crypto.subtle.importKey(
+                    'raw',
+                    decryptedRaw,
+                    { name: 'AES-GCM' },
+                    false,
+                    ['encrypt', 'decrypt']
+                  );
+                  await cacheRoomKey(roomId, aesKey);
+                  
+                  const existingKeys = roomKeysRef.current.get(roomId) || [];
+                  roomKeysRef.current.set(roomId, [...existingKeys, aesKey]);
+                  
+                  if (wsRef.current) {
+                    wsRef.current.ackKeyExchange(roomId);
+                  }
+                  
+                  // Trigger reload history to decrypt messages with the new key
+                  if (activeRoomRef.current && activeRoomRef.current.roomId === roomId) {
+                    handleLoadHistory(roomId);
+                  }
+                }
+              } catch (e) {
+                console.error('Failed to decrypt key exchange', e);
+              }
+            }
+            return;
           }
         },
         () => {

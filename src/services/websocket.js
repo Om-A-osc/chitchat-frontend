@@ -59,6 +59,18 @@ export function connectWebSocket(token, onMessage, onOpen, onClose, onError) {
       ws.close();
     },
 
+    requestRoomKey(roomId) {
+      this.send({ type: 'REQUEST_ROOM_KEY', roomId });
+    },
+
+    sendKeyExchange(roomId, recipientUsername, encryptedKey) {
+      this.send({ type: 'KEY_EXCHANGE', roomId, recipientUsername, encryptedKey });
+    },
+
+    ackKeyExchange(roomId) {
+      this.send({ type: 'ACK_KEY_EXCHANGE', roomId });
+    },
+
     get readyState() {
       return ws.readyState;
     },
