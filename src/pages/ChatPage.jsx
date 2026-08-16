@@ -84,11 +84,12 @@ export default function ChatPage() {
                 if (idx !== -1) {
                   const msg = { ...roomMsgs[idx] };
                   if (!msg.receipts) msg.receipts = {};
+                  const currentReceipt = msg.receipts?.[data.username] || {};
                   msg.receipts = {
                     ...msg.receipts,
                     [data.username]: {
-                      delivered: data.messageDelivered,
-                      read: data.messageRead,
+                      delivered: data.messageDelivered || currentReceipt.delivered,
+                      read: data.messageRead || currentReceipt.read,
                     }
                   };
                   roomMsgs[idx] = msg;
@@ -121,7 +122,7 @@ export default function ChatPage() {
             });
 
             // Send delivery and read receipts for others' messages
-            if (data.sender !== username && wsRef.current) {
+            if (data.sender !== username && data.sender !== 'SYSTEM_DAEMON' && wsRef.current) {
               wsRef.current.sendDeliveredReceipt(roomId, data.messageId);
               
               if (currentRoom && currentRoom.roomId === roomId) {

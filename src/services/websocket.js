@@ -1,4 +1,5 @@
-const WS_BASE = `http://${window.location.hostname}:8080/ws`;
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_BASE = `${wsProtocol}//${window.location.hostname}:8080/ws`;
 
 export function connectWebSocket(token, onMessage, onOpen, onClose, onError) {
   const url = `${WS_BASE}?token=${encodeURIComponent(token)}`;

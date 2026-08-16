@@ -93,7 +93,11 @@ export default function ChatArea({
           </svg>
         </button>
         <div className="no-room-selected">
-          <div className="no-room-icon">💬</div>
+          <div className="no-room-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
           <h2 className="no-room-title">Welcome to ChitChat</h2>
           <p className="no-room-text">
             Select a room from the sidebar or create a new one to start chatting with your team.
@@ -176,7 +180,7 @@ export default function ChatArea({
         )}
         {historyStatus === 'error' && (
           <div className="chat-history-status error" style={{ color: 'red', textAlign: 'center', padding: '10px' }}>
-            Failed to load history. <button onClick={onLoadMore} style={{marginLeft: '10px', padding: '2px 8px'}}>Retry</button>
+            Failed to load history. <button onClick={() => onLoadMore(room?.roomId)} style={{marginLeft: '10px', padding: '2px 8px'}}>Retry</button>
           </div>
         )}
         {historyStatus === 'fetched' && messages.length > 0 && (
@@ -187,7 +191,11 @@ export default function ChatArea({
         
         {messages.length === 0 && historyStatus === 'fetched' ? (
           <div className="chat-empty">
-            <div className="chat-empty-icon">🚀</div>
+            <div className="chat-empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
             <h3 className="chat-empty-title">Start the conversation</h3>
             <p className="chat-empty-text">
               This is the beginning of <strong>#{room.roomname}</strong>. Send a message to get things going!

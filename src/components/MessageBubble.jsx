@@ -29,7 +29,7 @@ export default function MessageBubble({ message, isOwn, room }) {
   // Calculate overall status
   let overallStatus = 'sent'; // default
   if (hasReceipts) {
-    const allRead = Object.values(receipts).some(r => isStatusSet(r.read));
+    const allRead = Object.keys(receipts).length > 0 && Object.values(receipts).every(r => isStatusSet(r.read));
     const anyDelivered = Object.values(receipts).some(r => isStatusSet(r.delivered) || isStatusSet(r.read));
     if (allRead) {
       overallStatus = 'read';
@@ -42,6 +42,9 @@ export default function MessageBubble({ message, isOwn, room }) {
   const members = room?.members || [];
   const otherMembers = members.filter(m => m.username !== sender).map(m => m.username);
   const canShowInfo = isOwn && otherMembers.length > 0;
+
+  const isTampered = message.content?.startsWith('[TAMPERED');
+  const isSignatureFailed = message.content?.startsWith('[SIGNATURE VERIFICATION FAILED');
 
   return (
     <div className={`message-group ${isOwn ? 'own' : ''}`}>
@@ -60,14 +63,37 @@ export default function MessageBubble({ message, isOwn, room }) {
             )}
           </span>
         </div>
-        <div 
-          className="message-text" 
-          onClick={() => { if (canShowInfo) setShowStatus(!showStatus); }}
-          style={{ cursor: canShowInfo ? 'pointer' : 'default' }}
-          title={canShowInfo ? "Click to view message info" : ""}
-        >
-          {message.content}
-        </div>
+        {isTampered || isSignatureFailed ? (
+          <div className="message-security-alert" style={{
+            color: '#FF4D4D',
+            backgroundColor: 'rgba(255, 77, 77, 0.12)',
+            border: '1px solid rgba(255, 77, 77, 0.35)',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            fontSize: '13px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginTop: '4px'
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>{message.content}</span>
+          </div>
+        ) : (
+          <div 
+            className="message-text" 
+            onClick={() => { if (canShowInfo) setShowStatus(!showStatus); }}
+            style={{ cursor: canShowInfo ? 'pointer' : 'default' }}
+            title={canShowInfo ? "Click to view message info" : ""}
+          >
+            {message.content}
+          </div>
+        )}
         {showStatus && canShowInfo && (() => {
           const readBy = [];
           const deliveredTo = [];

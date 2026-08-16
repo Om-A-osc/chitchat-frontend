@@ -96,7 +96,11 @@ export async function createRoom(token, roomname, participants, maximumCapacity)
     throw new Error('Failed to create room');
   }
 
-  return await res.text();
+  const text = await res.text();
+  if (!text || text.trim() === '') {
+    throw new Error('Failed to create room. Verify all participant usernames exist.');
+  }
+  return text;
 }
 
 export async function fetchRooms(token) {
