@@ -181,7 +181,7 @@ export default function ChatArea({
         )}
         {historyStatus === 'fetched' && messages.length > 0 && (
           <div className="chat-history-status end">
-            End of chat history (last 2 days)
+            End of chat history
           </div>
         )}
         
