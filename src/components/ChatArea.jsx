@@ -74,7 +74,7 @@ export default function ChatArea({
     if (room && historyStatus === 'unfetched') {
       onLoadMore(room.roomId);
     }
-  }, [room?.roomId, historyStatus, onLoadMore]);
+  }, [room, historyStatus, onLoadMore]);
 
   // No room selected
   if (!room) {

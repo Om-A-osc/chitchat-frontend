@@ -36,6 +36,7 @@ export default function SignupPage({ onSwitchToLogin }) {
       setSuccess('Account created! Redirecting to login...');
       setTimeout(() => onSwitchToLogin(), 1500);
     } catch (err) {
+      console.error('Signup error:', err);
       setError('Signup failed. Username may already be taken.');
     } finally {
       setLoading(false);

@@ -23,6 +23,7 @@ export default function LoginPage({ onSwitchToSignup }) {
       const data = await apiLogin(username.trim(), password);
       loginWithTokens(data.accessToken, data.refreshToken);
     } catch (err) {
+      console.error('Login error:', err);
       setError('Invalid username or password. Please try again.');
     } finally {
       setLoading(false);

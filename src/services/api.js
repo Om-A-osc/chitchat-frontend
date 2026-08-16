@@ -83,7 +83,7 @@ export async function signup(username, password, tagline, profilePicture) {
   return await res.json();
 }
 
-export async function createRoom(token, roomname, participants, maximumCapacity) {
+export async function createRoom(_token, roomname, participants, maximumCapacity) {
   const res = await fetchWithAuth(`${API_BASE}/room/create`, {
     method: 'POST',
     headers: {
@@ -103,7 +103,7 @@ export async function createRoom(token, roomname, participants, maximumCapacity)
   return text;
 }
 
-export async function fetchRooms(token) {
+export async function fetchRooms(_token) {
   const res = await fetchWithAuth(`${API_BASE}/room/all`, {
     method: 'GET',
   });
@@ -172,7 +172,7 @@ export async function fetchRooms(token) {
   return rooms;
 }
 
-export async function fetchRecentMessages(token, roomId) {
+export async function fetchRecentMessages(_token, roomId) {
   console.log(`[API] fetchRecentMessages called for roomId: ${roomId}`);
   try {
     const res = await fetchWithAuth(`${API_BASE}/rooms/${roomId}/messages/recent`, {
@@ -235,7 +235,7 @@ export async function leaveRoom(roomId) {
   return await res.text();
 }
 
-export async function fetchMessageReceipt(token, messageId) {
+export async function fetchMessageReceipt(_token, messageId) {
   try {
     const res = await fetchWithAuth(`${API_BASE}/rooms/${messageId}`, {
       method: 'GET',

@@ -172,7 +172,7 @@ export default function ChatPage() {
         wsRef.current = null;
       }
     };
-  }, [token]);
+  }, [token, username]);
 
   // Mark existing messages as read when viewing a room, and fetch receipts for own messages
   useEffect(() => {
