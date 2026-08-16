@@ -1,4 +1,4 @@
-const WS_BASE = 'http://localhost:8080/ws';
+const WS_BASE = `http://${window.location.hostname}:8080/ws`;
 
 export function connectWebSocket(token, onMessage, onOpen, onClose, onError) {
   const url = `${WS_BASE}?token=${encodeURIComponent(token)}`;

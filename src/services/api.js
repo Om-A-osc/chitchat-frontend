@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080';
+const API_BASE = `http://${window.location.hostname}:8080`;
 
 async function fetchWithAuth(url, options = {}) {
   let token = localStorage.getItem('chitchat_token');
